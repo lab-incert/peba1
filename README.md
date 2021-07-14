@@ -28,4 +28,3 @@ The executable `Client` is created and can be executed.
 ### Licence
 
 THREATS is open-source software distributed under the terms of the Apache 2.0 license.
-This work is presented in the paper "Privacy-Preserving Biometric Matching Using Homomorphic Encryption", by Pradel and Mitchell, to appear in the 20th IEEE International Conference on Trust, Security and Privacy in Computing and Communications (TrustCom 2021), on 18-20th August 2021 in Shenyang, China.
