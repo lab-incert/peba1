@@ -1,4 +1,4 @@
-# threats
+# TREATS
 Implementation of the protocol THREATS based on the TFHE library.
 
 version 1.0 -- first release date: 11-07-2021
