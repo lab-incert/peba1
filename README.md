@@ -12,7 +12,9 @@ This work is presented in the paper *Privacy-Preserving Biometric Matching Using
 
 ### Dependencies
 
-TBC
+This code has been tested on Ubuntu 20.04 and 21.04, 64-bit. 
+It requires the dependencies from the TFHE library, and one of the FFT processor they suggest.
+Please follow the instruction on the [TFHE page](https://github.com/tfhe/tfhe).
 
 ### Installation
 
