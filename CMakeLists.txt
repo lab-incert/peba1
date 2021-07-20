@@ -11,6 +11,6 @@ add_library(tfhe SHARED IMPORTED)
 set_property(TARGET tfhe PROPERTY IMPORTED_LOCATION "/usr/local/lib/libtfhe-nayuki-portable.so")
 include_directories(/usr/local/include/tfhe)
 
-add_executable(Client src/Client.cpp include/Client.h src/Math.cpp include/Math.h)
-target_link_libraries(Client tfhe)
+add_executable(THREATS src/Client.cpp include/Client.h src/Math.cpp include/Math.h src/main.cpp)
+target_link_libraries(THREATS tfhe)
 
