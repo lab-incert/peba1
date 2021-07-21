@@ -30,7 +30,9 @@ void minimum(LweSample* result, LweSample* bit, const LweSample* a, const LweSam
 
 
 uint64_t ManhattanDistance(std::vector<uint8_t> a, std::vector<uint8_t> b);
+uint64_t ManhattanDistance64(std::vector<uint64_t> a, std::vector<uint64_t> b);
 uint64_t EuclideanDistance(std::vector<uint8_t> a, std::vector<uint8_t> b);
+uint64_t EuclideanDistance64(std::vector<uint64_t> a, std::vector<uint64_t> b);
 
 void HE_ManhattanDistance(LweSample* result,  std::vector<LweSample*> a, std::vector<LweSample*> b, const int bitsize, const TFheGateBootstrappingCloudKeySet* cloud_key);
 void HE_EuclideanDistance(LweSample* result, std::vector<LweSample*> a, std::vector<LweSample*> b, const int bitsize, const TFheGateBootstrappingCloudKeySet* cloud_key);

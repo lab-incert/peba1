@@ -290,10 +290,38 @@ uint64_t ManhattanDistance(vector<uint8_t> a, vector<uint8_t> b) {
 }
 
 /*
+ * Calcul of the Manhattan Distance between two vectors of numbers coded on 64 bits, i.e. plaintexts
+ */
+uint64_t ManhattanDistance64(vector<uint64_t> a, vector<uint64_t> b) {
+    if (a.size() != b.size())
+        perror("Manhattan Distance between two vectors of different sizes.\n");
+
+    long result = 0;
+    for(int i = 0; i < a.size(); i++)
+        result += labs(a[i] - b[i]);
+    return result;
+}
+
+/*
  * Calcul of the square Euclidean Distance between two vectors of long, i.e. plaintexts
  * The square root at the end is not executed as the equivalent operation on encrypted ciphertexts is too costly
  */
 uint64_t EuclideanDistance(vector<uint8_t> a, vector<uint8_t> b) {
+    if (a.size() != b.size())
+        perror("Euclidean Distance between two vectors of different sizes.\n");
+
+    long result =0;
+    for (int i = 0; i < a.size() ; ++i)
+        result += powl(a[i] - b[i], 2);
+    //result = sqrtl(result);
+    return result;
+}
+
+/*
+ * Calcul of the square Euclidean Distance between two vectors of numbers coded on 64 bits, i.e. plaintexts
+ * The square root at the end is not executed as the equivalent operation on encrypted ciphertexts is too costly
+ */
+uint64_t EuclideanDistance64(vector<uint64_t> a, vector<uint64_t> b) {
     if (a.size() != b.size())
         perror("Euclidean Distance between two vectors of different sizes.\n");
 
@@ -473,6 +501,8 @@ uint64_t TwoSComplement(uint64_t a, const int bitsize){
 uint64_t ABS(uint64_t a, const int bitsize){
     uint64_t bitsize_64 = bitsize-1;
     uint64_t tmp = (a >> bitsize_64);
+//    printSlot64(a);
+//    printSlot64(tmp);
     uint64_t mask = 0;
     for (int i = 0; i < bitsize; ++i) {
         mask = (mask ^ (tmp << i));
