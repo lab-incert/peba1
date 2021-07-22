@@ -588,7 +588,7 @@ uint64_t Function_f_clear(vector<uint64_t> a, vector<uint64_t> b, uint64_t bound
     uint64_t one = 1;
     uint64_t zero = 0;
     uint64_t ed = EuclideanDistanceBitwise(a, b, bitsize);
-    if (ed < bound_match_clear)
+    if (ed <= bound_match_clear)
         return one;
     else
         return zero;
