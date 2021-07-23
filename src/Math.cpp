@@ -30,8 +30,6 @@ void printSlot64(uint64_t n)
 }
 
 
-
-
 /*
  * Elementary operation on bits, such as addition substration etc.
  *
@@ -65,6 +63,7 @@ void bootsADD1bit(LweSample* result, LweSample* a, LweSample* b, LweSample* carr
 }
 
 // Addition of multibit sample
+// All the addition will run on 9 bits (8 significant bits, 1 sign bit)
 void bootsADDNbit(LweSample* result, LweSample* a, LweSample* b, const int bitsize, const TFheGateBootstrappingCloudKeySet* cloud_key){
 
     LweSample* carry = new_gate_bootstrapping_ciphertext_array(1, cloud_key->params);
@@ -102,7 +101,7 @@ void bootsTwoSComplement(LweSample* result, LweSample* a, const int bitsize, con
     }
     //here, if a is positive, then the extra bit becomes 1, and vice versa
     //but a is positive for sure, thus it obviously is a 1
-//    bootsCONSTANT(&result[bitsize], 1, cloud_key);
+    bootsCONSTANT(&result[bitsize], 1, cloud_key);
 
     // for 2s complement, you need to add 1 to the 1st complement
     //bootsCOPY(&zero_one[0], &result[0], cloud_key);
@@ -121,26 +120,33 @@ void bootsTwoSComplement(LweSample* result, LweSample* a, const int bitsize, con
 // in substraction, when this is used, bitsize is 9
 void bootsABS(LweSample* result, LweSample* a, const int bitsize, const TFheGateBootstrappingCloudKeySet* cloud_key){
     LweSample* mask = new_gate_bootstrapping_ciphertext_array(bitsize, cloud_key->params);
-    LweSample* tmp = new_gate_bootstrapping_ciphertext_array(bitsize+1, cloud_key->params);
+    LweSample* tmp = new_gate_bootstrapping_ciphertext_array(bitsize, cloud_key->params);
+    LweSample* zero_or_one = new_gate_bootstrapping_ciphertext_array(bitsize, cloud_key->params);
 
     for (int i = 0; i < bitsize; ++i) {
         bootsCOPY(&mask[i], &a[bitsize-1], cloud_key);
 //        bootsCONSTANT(&mask[i], 1, cloud_key);
 //        bootsCOPY(&result[i], &mask[i], cloud_key);
+        if (i==0)
+            bootsCOPY(&zero_or_one[0], &a[bitsize-1], cloud_key);
+        else
+            bootsCONSTANT(&zero_or_one[i], 0, cloud_key);
     }
+//    bootsCOPY(&zero_or_one[0], &a[bitsize-1], cloud_key);
 
-    bootsADDNbit(tmp, a, mask, bitsize, cloud_key);
-//    bootsADDNbit(result, a, mask, bitsize-1, cloud_key);
 
     for (int i = 0; i < bitsize; ++i) {
-        bootsXOR(&result[i], &tmp[i], &mask[i], cloud_key);
+        bootsXOR(&tmp[i], &a[i], &mask[i], cloud_key);
 //        bootsXOR(&result[i], &a[i], &mask[i], cloud_key);
     }
 
+    bootsADDNbit(result, tmp, zero_or_one, bitsize, cloud_key);
+//    bootsADDNbit(result, a, mask, bitsize-1, cloud_key);
 
     // Free
     delete_gate_bootstrapping_ciphertext_array(bitsize, mask);
-    delete_gate_bootstrapping_ciphertext_array(bitsize+1, tmp);
+    delete_gate_bootstrapping_ciphertext_array(bitsize, tmp);
+    delete_gate_bootstrapping_ciphertext_array(bitsize, zero_or_one);
 }
 
 // Calcul of the difference between a and b
@@ -148,10 +154,16 @@ void bootsABS(LweSample* result, LweSample* a, const int bitsize, const TFheGate
 void bootsSUBNbit(LweSample* result, LweSample* a, LweSample* b, const int bitsize, const TFheGateBootstrappingCloudKeySet* cloud_key){
     LweSample* b_2comp = new_gate_bootstrapping_ciphertext_array(bitsize+1, cloud_key->params);
     LweSample* tmp = new_gate_bootstrapping_ciphertext_array(bitsize+1, cloud_key->params);
+    LweSample* a_long = new_gate_bootstrapping_ciphertext_array(bitsize+1, cloud_key->params);
+    for (int i = 0; i < bitsize; ++i) {
+        bootsCOPY(&a_long[i], &a[i], cloud_key);
+    }
+    bootsCONSTANT(&a_long[bitsize], 0, cloud_key);
 
     bootsTwoSComplement(b_2comp, b, bitsize, cloud_key);
-    bootsADDNbit(tmp, a, b_2comp, bitsize, cloud_key);
-//    bootsADDNbit(result, a, b_2comp, bitsize, cloud_key);
+//    bootsTwoSComplement(result, b, bitsize, cloud_key);
+    bootsADDNbit(tmp, a_long, b_2comp, bitsize+1, cloud_key);
+//    bootsADDNbit(result, a_long, b_2comp, bitsize+1, cloud_key);
 
     // Calcul of the absolute value, as we need only the difference
     bootsABS(result, tmp, bitsize, cloud_key);
@@ -159,6 +171,7 @@ void bootsSUBNbit(LweSample* result, LweSample* a, LweSample* b, const int bitsi
 
     // Free
     delete_gate_bootstrapping_ciphertext_array(bitsize+1, b_2comp);
+    delete_gate_bootstrapping_ciphertext_array(bitsize+1, a_long);
     delete_gate_bootstrapping_ciphertext_array(bitsize+1, tmp);
 }
 
