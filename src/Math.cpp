@@ -164,24 +164,86 @@ void bootsSUBNbit(LweSample* result, LweSample* a, LweSample* b, const int bitsi
     LweSample* b_2comp = new_gate_bootstrapping_ciphertext_array(bitsize+1, cloud_key->params);
     LweSample* tmp = new_gate_bootstrapping_ciphertext_array(bitsize+2, cloud_key->params);
     LweSample* a_long = new_gate_bootstrapping_ciphertext_array(bitsize+1, cloud_key->params);
+    LweSample* tmp2 = new_gate_bootstrapping_ciphertext_array(bitsize+1, cloud_key->params);
+    LweSample* tmp3 = new_gate_bootstrapping_ciphertext_array(bitsize+1, cloud_key->params);
+
     for (int i = 0; i < bitsize; ++i) {
         bootsCOPY(&a_long[i], &a[i], cloud_key);
     }
     bootsCONSTANT(&a_long[bitsize], 0, cloud_key);
 
+//    for (int i = 0; i < bitsize+1; ++i) {
+//        bootsCOPY(&result[i], &a_long[i], cloud_key);
+//    }
+
     bootsTwoSComplement(b_2comp, b, bitsize, cloud_key);
+    bootsCONSTANT(&b_2comp[bitsize], 0, cloud_key);
 //    bootsTwoSComplement(result, b, bitsize, cloud_key);
-//    bootsADDNbit(tmp, a_long, b_2comp, bitsize+1, cloud_key);
-    bootsADDNbit(result, a_long, b_2comp, bitsize+1, cloud_key);
+//    for (int i = 0; i < bitsize+1; ++i) {
+//        bootsCOPY(&result[i], &b_2comp[i], cloud_key);
+//    }
+    bootsADDNbit(tmp, a_long, b_2comp, bitsize+1, cloud_key);
+//    bootsADDNbit(result, a_long, b_2comp, bitsize+1, cloud_key);
 
     // Calcul of the absolute value, as we need only the difference
 //    bootsABS(result, tmp, bitsize+1, cloud_key);
 //    bootsTwoSComplement(result, tmp, bitsize+1, cloud_key);
+//    bootsABS(tmp, result, bitsize, cloud_key);
+//    bootsTwoSComplement(result, tmp, bitsize+2, cloud_key);
+
+    /* If the final carry over the sum is 1, it is dropped and the result is positive
+     If there is no carry over, the two's complement of the sum will be the result and it is negative
+     In both cases, the absolute value is done afterwards to obtain the difference */
+//    bootsCOPY(&b_2comp[0], &tmp[bitsize], cloud_key); //the final carry is copied
+//    bootsCONSTANT(&b_2comp[1], 1, cloud_key); // to inverse the bits, we initialise one to 1
+//    bootsXOR(&b_2comp[2], &b_2comp[0], &b_2comp[1], cloud_key); // the final mask is equal to this bit
+//    for (int i = 0; i < bitsize+1; ++i) {
+//        bootsXOR(&tmp2[i], &tmp[i], &b_2comp[2], cloud_key);
+//    }
+//    bootsCOPY(&tmp2[bitsize], &b_2comp[2], cloud_key);
+//    bootsCOPY(&a_long[0], &b_2comp[2], cloud_key);
+//    for (int i = 1; i < bitsize+1; ++i) {
+//        bootsCONSTANT(&a_long[i], 0, cloud_key);
+//    }
+//    bootsADDNbit(tmp, tmp2, a_long, bitsize+1, cloud_key);
+//    bootsABS(result, tmp, bitsize+1, cloud_key);
+
+    // Algo by Mathieu
+    for (int i = 0; i < bitsize; ++i) {
+        bootsCOPY(&a_long[i], &tmp[bitsize], cloud_key);
+    }
+    bootsNOT(&a_long[bitsize], &tmp[bitsize], cloud_key);
+    //a_long is var
+    for (int i = 0; i < bitsize+1; ++i) {
+        bootsCOPY(&b_2comp[i], &a_long[bitsize], cloud_key);
+    } // b_2comp is s barre
+    for (int i = 0; i < bitsize+1; ++i) {
+        bootsAND(&tmp2[i], &tmp[i], &b_2comp[i], cloud_key);
+    }
+    bootsTwoSComplement(tmp3, tmp2, bitsize, cloud_key); // tmp3 = Twos(TMP && s barre)
+    for (int i = 0; i < bitsize+1; ++i) {
+        bootsAND(&tmp2[i], &tmp3[i], &b_2comp[i], cloud_key);
+    }// tmp2 = s barre && tmp3
+    for (int i = 0; i < bitsize+1; ++i) {
+        bootsAND(&tmp3[i], &tmp[i], &a_long[i], cloud_key);
+    } //tmp3 = Tmp && var
+    bootsCOPY(&a_long[bitsize], &a_long[0], cloud_key);//a_long becomes s
+    for (int i = 0; i < bitsize+1; ++i) {
+        bootsAND(&tmp[i], &tmp3[i], &a_long[i], cloud_key);
+    } // tmp = tmp3 && s
+    for (int i = 0; i < bitsize+1; ++i) {
+        bootsOR(&result[i], &tmp[i], &tmp2[i], cloud_key);
+//        bootsOR(&tmp3[i], &tmp[i], &tmp2[i], cloud_key);
+    } // res = tmp || tmp2
+
+//    bootsABS(result, tmp3, bitsize+1, cloud_key);
 
     // Free
     delete_gate_bootstrapping_ciphertext_array(bitsize+1, b_2comp);
     delete_gate_bootstrapping_ciphertext_array(bitsize+1, a_long);
     delete_gate_bootstrapping_ciphertext_array(bitsize+2, tmp);
+    delete_gate_bootstrapping_ciphertext_array(bitsize+1, tmp2);
+    delete_gate_bootstrapping_ciphertext_array(bitsize+1, tmp3);
 }
 
 // Multiply a by pow(2,n), i.e. shift n bits to the left
