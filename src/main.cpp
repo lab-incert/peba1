@@ -48,12 +48,12 @@ int main(void)
     for (int i = 0; i < nslots; ++i) {
         if (i%2==0)
         {
-//            srand(time(NULL)*i^3);
-//            template_client[i] =  rand() %256;
+            srand(time(NULL)*i^3);
+            template_client[i] =  rand() %256;
             sample_client_true[i] = template_client[i] + 1;
             srand(time(NULL)+i);
             sample_client_false[i] = i;//rand() %256;
-            template_client[i] = 94;
+//            template_client[i] = 94;
 //            sample_client_false[i] = 173;
         }
         else
@@ -63,12 +63,12 @@ int main(void)
             sample_client_true[i] = -(template_client[i] + 1);
             srand(time(NULL)+i);
             sample_client_false[i] = -i-2;//rand() %256;
-            template_client[i] = 216;
+//            template_client[i] = 216;
 //            sample_client_false[i] = 173;
         }
-//        template_client[i] = 14;
+        template_client[i] = 103;
 //        sample_client_true[i] = -(template_client[i] + 1);
-//        sample_client_false[i] = 50;
+        sample_client_false[i] = 160;
     }
 
     cout << "template_client" << endl;
@@ -137,11 +137,12 @@ int main(void)
 
 
     LweSample* tmp = new_gate_bootstrapping_ciphertext_array(max_bitsize, params);
+    LweSample* tmp_carry = new_gate_bootstrapping_ciphertext_array(1, cloud_key->params);
     uint64_t tmp_result = 0;
     auto t_from = Clock::now();
     auto t_to = Clock::now();
     chrono::duration<double> t_average;
-    int loop = 64; //number of operations
+    int loop = 128; //number of operations
 
 // ------------------------------------------------------
 //   BEGINNING OF THE SUITE OF TESTS ON THE PLAINTEXT DOMAIN
@@ -354,7 +355,7 @@ int main(void)
         cout << "Test of the addition of 2 n-bit numbers " << (int) template_client[r1] << " + "
              << (int) sample_client_false[r2] << endl;
         t_from = Clock::now();
-        bootsADDNbit(tmp, enc_template_client[r1], enc_sample_client_false[r2], bitsize, cloud_key);
+        bootsADDNbit(tmp, enc_template_client[r1], enc_sample_client_false[r2], tmp_carry, bitsize, cloud_key);
         t_to = Clock::now();
         chrono::duration<double> t_duration = t_to - t_from;
         t_average += t_duration;
@@ -362,6 +363,8 @@ int main(void)
 //             << chrono::duration_cast<chrono::seconds>(t_to - t_from).count()
 //             << " seconds" << endl;
         tmp_result = 0;
+//        uint8_t dec_carry = bootsSymDecrypt(&tmp_carry[0], key);
+//        tmp_result |= (dec_carry << 0);
         for (int m = 0; m < max_bitsize; ++m) {
             uint8_t dec_mu = bootsSymDecrypt(&tmp[m], key);
             tmp_result |= (dec_mu << m);
@@ -373,7 +376,7 @@ int main(void)
             printf("The result is %ld\n", tmp_result);
         }
         else
-            printf("The result is %ld and should be %d\n", tmp_result, sample_client_true[r1] + template_client[r2]);
+            printf("The result is %ld and should be %d\n", tmp_result, template_client[r1] + sample_client_false[r2]);
     }
     cout << "Addition: " << cnt << " success, " << loop-cnt << " fails" << endl;
     cout << "Addition average time: " << chrono::duration_cast<chrono::seconds>(t_average).count()/loop << " seconds" << endl;
@@ -666,6 +669,7 @@ int main(void)
      */
     //clean up all pointers
     delete_gate_bootstrapping_ciphertext_array(max_bitsize, tmp);
+    delete_gate_bootstrapping_ciphertext_array(1, tmp_carry);
     delete_gate_bootstrapping_ciphertext_array(max_bitsize, tmp_dist);
     delete_gate_bootstrapping_ciphertext_array(max_bitsize, enc_bound_match);
     delete_gate_bootstrapping_ciphertext_array(max_bitsize, enc_b);
