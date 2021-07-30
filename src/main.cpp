@@ -66,9 +66,9 @@ int main(void)
 //            template_client[i] = 216;
 //            sample_client_false[i] = 173;
         }
-        template_client[i] = 103;
+//        template_client[i] = 103;
 //        sample_client_true[i] = -(template_client[i] + 1);
-        sample_client_false[i] = 160;
+//        sample_client_false[i] = 160;
     }
 
     cout << "template_client" << endl;
@@ -344,7 +344,7 @@ int main(void)
     // Addition
     cnt = 0;
     t_average = t_to - t_to;
-    for (int i = 0; i < 0; ++i) {
+    for (int i = 0; i < loop; ++i) {
         srand(time(NULL));
         int r1 = rand() %nslots;
         srand(time(NULL)*2+1);
@@ -370,7 +370,7 @@ int main(void)
             tmp_result |= (dec_mu << m);
         }
 //        printf("The result is %ld and should be %d\n", tmp_result, sample_client_true[r1] + template_client[r2]);
-        if (tmp_result == (template_client[r1] + sample_client_false[r2]))
+        if (tmp_result == (template_client[r1] + sample_client_false[r2])%256)
         {
             cnt++;
             printf("The result is %ld\n", tmp_result);
@@ -385,7 +385,7 @@ int main(void)
     // Two's complement
     cnt=0;
     t_average = t_to - t_to;
-    for (int i = 0; i < 0; ++i) {
+    for (int i = 0; i < loop; ++i) {
         srand(time(NULL));
         int r1 = rand() %nslots;;
         for (int i = 0; i < max_bitsize; ++i) {
@@ -420,7 +420,7 @@ int main(void)
     // Absolute value
     cnt =0;
     t_average = t_to - t_to;
-    for (int i = 0; i < 0; ++i) {
+    for (int i = 0; i < loop; ++i) {
         srand(time(NULL));
         int r1 = rand() %nslots;
         for (int i = 0; i < max_bitsize; ++i) {
