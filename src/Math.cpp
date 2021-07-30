@@ -1,14 +1,3 @@
-//
-// Created by gaetan on 13/07/2020.
-//
-
-#include "../include/Math.h"
-
-//
-// Created by gaetan on 11/05/2020.
-//
-
-
 #include <cstdlib>
 #include <cstdio>
 #include <cmath>
@@ -29,7 +18,6 @@ void printSlot64(uint64_t n)
     printf("]");
 }
 
-
 /*
  * Elementary operation on bits, such as addition substration etc.
  *
@@ -49,7 +37,6 @@ void bootsADD1bit(LweSample* result, LweSample* a, LweSample* b, LweSample* carr
     // Update of the next carry
     bootsAND(&tmp[0], a, b, cloud_key);
     bootsCOPY(&tmp_carry[0], &tmp[0], cloud_key);
-//    bootsXOR(&tmp_carry[0], &init_carry[0], &tmp[0], cloud_key);
     bootsAND(&tmp[0], a, &init_carry[0], cloud_key);
     bootsXOR(carry, &tmp_carry[0], &tmp[0], cloud_key);
     bootsAND(&tmp[0], &init_carry[0], b, cloud_key);
@@ -63,8 +50,7 @@ void bootsADD1bit(LweSample* result, LweSample* a, LweSample* b, LweSample* carr
 }
 
 // Addition of multibit sample
-// All the addition will run on 9 bits (8 significant bits, 1 sign bit)
-// The carry is used only for the subtraction
+// The carry in parameter is useful for the subtraction
 void bootsADDNbit(LweSample* result, LweSample* a, LweSample* b, LweSample* carry, const int bitsize, const TFheGateBootstrappingCloudKeySet* cloud_key){
 
     LweSample* tmp_carry = new_gate_bootstrapping_ciphertext_array(1, cloud_key->params);
@@ -74,26 +60,14 @@ void bootsADDNbit(LweSample* result, LweSample* a, LweSample* b, LweSample* carr
     for (int i = 0; i < bitsize; ++i) {
         bootsADD1bit(&result[i], &a[i], &b[i], &tmp_carry[0], cloud_key);
     }
-
-    // If there is a carry at the last one
-//    LweSample* tmp = new_gate_bootstrapping_ciphertext_array(1, cloud_key->params);
-//    bootsCOPY(&tmp[0], &result[bitsize], cloud_key);
-//    bootsXOR(&result[bitsize], &tmp[0], &tmp_carry[0], cloud_key);
     bootsCOPY(&carry[0], &tmp_carry[0], cloud_key);
-//    bootsCOPY(&result[bitsize], &carry[0], cloud_key);
-//    bootsCOPY(&result[bitsize], &tmp_carry[0], cloud_key);
-
-//    for (int i = 0; i < bitsize; ++i) {
-//        bootsCOPY(&result[i], &carry[0], cloud_key);
-//    }
 
     // Free
     delete_gate_bootstrapping_ciphertext_array(1, tmp_carry);
-//    delete_gate_bootstrapping_ciphertext_array(1, tmp);
 }
 
 
-// Calcul of the 2's completement to do substraction
+// Calcul of the 2's complement to do substraction
 void bootsTwoSComplement(LweSample* result, LweSample* a, const int bitsize, const TFheGateBootstrappingCloudKeySet* cloud_key){
     LweSample* zero_one = new_gate_bootstrapping_ciphertext_array(bitsize+1, cloud_key->params);
     LweSample* tmp_carry = new_gate_bootstrapping_ciphertext_array(1, cloud_key->params);
@@ -109,24 +83,8 @@ void bootsTwoSComplement(LweSample* result, LweSample* a, const int bitsize, con
     for (int i = 0; i < bitsize; ++i) {
         bootsXOR(&tmp[i], &a[i], &zero_one[0], cloud_key);
     }
-    //here, if a is positive, then the extra bit becomes 1, and vice versa
-    //but a is positive for sure, thus it obviously is a 1
-//    bootsCONSTANT(&result[bitsize], 1, cloud_key);
-
     // for 2s complement, you need to add 1 to the 1st complement
     bootsADDNbit(result, tmp, zero_one, tmp_carry, bitsize, cloud_key);
-
-
-    //Problem when a = 0, then its two's complement is 256. The following fixes the issue.
-//    bootsOR(&tmp[0], &result[0], &result[1], cloud_key);
-//    int cnt = 0;
-//    while (cnt < (bitsize-2))
-//    {
-//        bootsOR(&tmp[cnt%2+1], &tmp[cnt%2], &result[cnt+2], cloud_key);
-//        cnt++;
-//    }
-//    bootsCOPY(&tmp[2], &result[bitsize], cloud_key);
-//    bootsAND(&result[bitsize], &tmp[0], &tmp[2], cloud_key);
 
     // Free
     delete_gate_bootstrapping_ciphertext_array(bitsize+1, zero_one);
@@ -140,39 +98,28 @@ void bootsABS(LweSample* result, LweSample* a, const int bitsize, const TFheGate
     LweSample* mask = new_gate_bootstrapping_ciphertext_array(bitsize, cloud_key->params);
     LweSample* tmp = new_gate_bootstrapping_ciphertext_array(bitsize+1, cloud_key->params);
     LweSample* tmp_carry = new_gate_bootstrapping_ciphertext_array(1, cloud_key->params);
-//    LweSample* zero_or_one = new_gate_bootstrapping_ciphertext_array(bitsize, cloud_key->params);
 
+    //first the mask is created
     for (int i = 0; i < bitsize; ++i) {
         bootsCOPY(&mask[i], &a[bitsize-1], cloud_key);
-//        bootsCONSTANT(&mask[i], 1, cloud_key);
-//        bootsCOPY(&result[i], &mask[i], cloud_key);
-//        if (i==0)
-//            bootsCOPY(&zero_or_one[0], &a[bitsize-1], cloud_key);
-//        else
-//            bootsCONSTANT(&zero_or_one[i], 0, cloud_key);
     }
-//    bootsCOPY(&zero_or_one[0], &a[bitsize-1], cloud_key);
 
+    // then the mask is added to the number
     bootsADDNbit(tmp, a, mask, tmp_carry, bitsize, cloud_key);
 
+    //finally the previous intermediate result is XORed with the mask
     for (int i = 0; i < bitsize; ++i) {
-//        bootsXOR(&tmp[i], &a[i], &mask[i], cloud_key);
-//        bootsXOR(&result[i], &a[i], &mask[i], cloud_key);
         bootsXOR(&result[i], &tmp[i], &mask[i], cloud_key);
     }
-
-//    bootsADDNbit(result, tmp, zero_or_one, tmp_carry, bitsize, cloud_key);
-//    bootsADDNbit(result, a, mask, tmp_carry, bitsize, cloud_key);
 
     // Free
     delete_gate_bootstrapping_ciphertext_array(bitsize, mask);
     delete_gate_bootstrapping_ciphertext_array(bitsize+1, tmp);
     delete_gate_bootstrapping_ciphertext_array(1, tmp_carry);
-//    delete_gate_bootstrapping_ciphertext_array(bitsize, zero_or_one);
 }
 
 // Calcul of the difference between a and b
-// We actually add a with the two's complement of b
+// a is added with the two's complement of b
 void bootsSUBNbit(LweSample* result, LweSample* a, LweSample* b, const int bitsize, const TFheGateBootstrappingCloudKeySet* cloud_key){
     LweSample* b_2comp = new_gate_bootstrapping_ciphertext_array(bitsize+1, cloud_key->params);
     LweSample* tmp = new_gate_bootstrapping_ciphertext_array(bitsize+2, cloud_key->params);
@@ -181,81 +128,47 @@ void bootsSUBNbit(LweSample* result, LweSample* a, LweSample* b, const int bitsi
     LweSample* tmp3 = new_gate_bootstrapping_ciphertext_array(bitsize+1, cloud_key->params);
     LweSample* tmp_carry = new_gate_bootstrapping_ciphertext_array(1, cloud_key->params);
 
-
+    //a is put to 9 bits, the 9th bits (most significant) will be the signing bit
     for (int i = 0; i < bitsize; ++i) {
         bootsCOPY(&a_long[i], &a[i], cloud_key);
     }
-    bootsCONSTANT(&a_long[bitsize], 0, cloud_key);
+    bootsCONSTANT(&a_long[bitsize], 0, cloud_key); //a is positive for sure (see main.cpp) thus the signing bit is 0
 
-//    for (int i = 0; i < bitsize+1; ++i) {
-//        bootsCOPY(&result[i], &a_long[i], cloud_key);
-//    }
-
-    bootsTwoSComplement(b_2comp, b, bitsize, cloud_key);
-    bootsCONSTANT(&b_2comp[bitsize], 1, cloud_key);
-//    bootsTwoSComplement(result, b, bitsize, cloud_key);
-//    for (int i = 0; i < bitsize+1; ++i) {
-//        bootsCOPY(&result[i], &b_2comp[i], cloud_key);
-//    }
+    bootsTwoSComplement(b_2comp, b, bitsize, cloud_key); //the 2's complement is calculed on 8 bits
+    bootsCONSTANT(&b_2comp[bitsize], 1, cloud_key); //the 9th bit is 1 as it is a negative number (b is positive, as for a)
+    //then the addition between a and 2's(b) is done
     bootsADDNbit(tmp, a_long, b_2comp, tmp_carry,  bitsize+1, cloud_key);
-//    bootsADDNbit(result, a_long, b_2comp, tmp_carry, bitsize+1, cloud_key);
 
-    // Calcul of the absolute value, as we need only the difference
-//    bootsABS(result, tmp, bitsize+1, cloud_key);
-//    bootsTwoSComplement(result, tmp, bitsize+1, cloud_key);
-//    bootsABS(tmp, result, bitsize, cloud_key);
-//    bootsTwoSComplement(result, tmp, bitsize+2, cloud_key);
+    // If the final carry over the addition is 1, it is dropped and the result is positive (we let it as such)
+    // If the final carry over the addition is 0, then two's complement of the sum is calculated as the sum is negative
+    // Branching condition is too costly in the ciphertext domain, thus the following algorithm is applied
 
-    /* If the final carry over the sum is 1, it is dropped and the result is positive
-     If there is no carry over, the two's complement of the sum will be the result and it is negative
-     In both cases, the absolute value is done afterwards to obtain the difference */
-//    bootsCOPY(&b_2comp[0], &tmp[bitsize], cloud_key); //the final carry is copied
-//    bootsCONSTANT(&b_2comp[1], 1, cloud_key); // to inverse the bits, we initialise one to 1
-//    bootsXOR(&b_2comp[2], &b_2comp[0], &b_2comp[1], cloud_key); // the final mask is equal to this bit
-//    for (int i = 0; i < bitsize+1; ++i) {
-//        bootsXOR(&tmp2[i], &tmp[i], &b_2comp[2], cloud_key);
-//    }
-//    bootsCOPY(&tmp2[bitsize], &b_2comp[2], cloud_key);
-//    bootsCOPY(&a_long[0], &b_2comp[2], cloud_key);
-
-//    for (int i = 1; i < bitsize+1; ++i) {
-//        bootsCONSTANT(&a_long[i], 0, cloud_key);
-//    }
-//    bootsADDNbit(tmp, tmp2, a_long, tmp_carry, bitsize+1, cloud_key);
-//    bootsABS(result, tmp, bitsize+1, cloud_key);
-
-    // Algo by Mathieu
+    //a_long is composed of 9 bits equal to carry that is called var
     for (int i = 0; i < bitsize+1; ++i) {
         bootsCOPY(&a_long[i], &tmp_carry[0], cloud_key);
-//        bootsCOPY(&result[i], &tmp_carry[0], cloud_key);
-//        bootsCOPY(&result[i], &tmp[i], cloud_key);
-//        bootsCOPY(&result[i], &a_long[i], cloud_key);
-//        bootsCOPY(&result[i], &b_2comp[i], cloud_key);
     }
-    //a_long is var composed of 9 c
-//    for (int i = 0; i < bitsize+1; ++i) {
-//        bootsCOPY(&result[i], &a_long[i], cloud_key);
-//    }
+
+    // b_comp is NOT(var)
     for (int i = 0; i < bitsize+1; ++i) {
         bootsNOT(&b_2comp[i], &tmp_carry[0], cloud_key);
-    } // b_2comp is var barre
+    }
 
+    // tmp2 = tmp && NOT(var)
     for (int i = 0; i < bitsize+1; ++i) {
         bootsAND(&tmp2[i], &tmp[i], &b_2comp[i], cloud_key);
-    } // tmp2 = tmp && var barre
-    bootsTwoSComplement(tmp3, tmp2, bitsize+1, cloud_key); // tmp3 = Twos(tmp && var barre)
-//    bootsTwoSComplement(result, tmp2, bitsize, cloud_key); // tmp3 = Twos(TMP && s barre)
+    }
+    // tmp3 = 2's(tmp && NOT(var))
+    bootsTwoSComplement(tmp3, tmp2, bitsize+1, cloud_key);
 
+    //tmp2 = tmp && var
     for (int i = 0; i < bitsize+1; ++i) {
         bootsAND(&tmp2[i], &tmp[i], &a_long[i], cloud_key);
-//        bootsAND(&result[i], &tmp[i], &a_long[i], cloud_key);
-    } //tmp2 = tmp && var
+    }
+
+    // res = tmp3 || tmp2
     for (int i = 0; i < bitsize+1; ++i) {
         bootsOR(&result[i], &tmp3[i], &tmp2[i], cloud_key);
-//        bootsOR(&tmp3[i], &tmp[i], &tmp2[i], cloud_key);
-    } // res = tmp3 || tmp2
-
-//    bootsABS(result, tmp3, bitsize+1, cloud_key);
+    }
 
     // Free
     delete_gate_bootstrapping_ciphertext_array(bitsize+1, b_2comp);
@@ -313,19 +226,14 @@ void bootsMultiply(LweSample* result, LweSample* a, LweSample* b, const int bits
     }
 
     for (int i = 0; i < bitsize; ++i) {
-//        bootsShiftLeftNR(tmp_and_result, length, i, cloud_key);
         for (int j = 0; j < i ; ++j) {
             bootsCONSTANT(&tmp_and_result[j], 0, cloud_key);
         }
         for (int j = 0; j < bitsize; ++j) {
             bootsAND(&tmp_and_result[j+i], &a[j], &b[i], cloud_key);
             bootsCOPY(&tmp_ongoing_sum[j], &tmp_final_sum[j], cloud_key);
-            //bootsXOR(&tmp[j], &tmp2[j], &tmp3[j], cloud_key);
-            //printf("%d tour %d sous tour\n",i, j);
         }
         for (int j = bitsize; j < length; ++j) {
-//            bootsAND(&tmp[], &a[], &b[i], cloud_key);
-//            bootsCOPY(&tmp[j], &result[j], cloud_key);
             bootsCOPY(&tmp_ongoing_sum[j], &tmp_final_sum[j], cloud_key);
         }
         bootsADDNbit(tmp_final_sum, tmp_and_result, tmp_ongoing_sum, tmp_carry, length-1, cloud_key);
@@ -377,68 +285,6 @@ void minimum(LweSample* result, LweSample* bit, const LweSample* a, const LweSam
     delete_gate_bootstrapping_ciphertext_array(2, tmps);
 }
 
-
-/*
- * Calcul of distances
- */
-
-
-/*
- * Calcul of the Manhattan Distance between two vectors of long, i.e. plaintexts
- */
-uint64_t ManhattanDistance(vector<uint8_t> a, vector<uint8_t> b) {
-    if (a.size() != b.size())
-        perror("Manhattan Distance between two vectors of different sizes.\n");
-
-    long result = 0;
-    for(int i = 0; i < a.size(); i++)
-        result += labs(a[i] - b[i]);
-    return result;
-}
-
-/*
- * Calcul of the Manhattan Distance between two vectors of numbers coded on 64 bits, i.e. plaintexts
- */
-uint64_t ManhattanDistance64(vector<uint64_t> a, vector<uint64_t> b) {
-    if (a.size() != b.size())
-        perror("Manhattan Distance between two vectors of different sizes.\n");
-
-    long result = 0;
-    for(int i = 0; i < a.size(); i++)
-        result += labs(a[i] - b[i]);
-    return result;
-}
-
-/*
- * Calcul of the square Euclidean Distance between two vectors of long, i.e. plaintexts
- * The square root at the end is not executed as the equivalent operation on encrypted ciphertexts is too costly
- */
-uint64_t EuclideanDistance(vector<uint8_t> a, vector<uint8_t> b) {
-    if (a.size() != b.size())
-        perror("Euclidean Distance between two vectors of different sizes.\n");
-
-    long result =0;
-    for (int i = 0; i < a.size() ; ++i)
-        result += powl(a[i] - b[i], 2);
-    //result = sqrtl(result);
-    return result;
-}
-
-/*
- * Calcul of the square Euclidean Distance between two vectors of numbers coded on 64 bits, i.e. plaintexts
- * The square root at the end is not executed as the equivalent operation on encrypted ciphertexts is too costly
- */
-uint64_t EuclideanDistance64(vector<uint64_t> a, vector<uint64_t> b) {
-    if (a.size() != b.size())
-        perror("Euclidean Distance between two vectors of different sizes.\n");
-
-    long result =0;
-    for (int i = 0; i < a.size() ; ++i)
-        result += powl(a[i] - b[i], 2);
-    //result = sqrtl(result);
-    return result;
-}
-
 /*
  * Calcul of the Manhattan Distance between two ciphertexts (b - a)
  * The result is in the [nslots-1] slot of the decrypted ciphertext "result"
@@ -467,21 +313,15 @@ void HE_ManhattanDistance(LweSample* result, vector<LweSample*> a, vector<LweSam
     }
 
     for (int i=0; i < nb_samples; i++){
-//        printf("On commence le %d sample\n", i+1);
-//        printf("Soustraction\n");
         bootsSUBNbit(tmp_diff, b[i], a[i], bitsize, cloud_key);
         for (int j = 0; j < bitsize+1; ++j) {
             bootsCOPY(&tmp_sum[j], &result[j], cloud_key);
         }
-
-//        printf("addition\n");
         bootsADDNbit(result, tmp_diff, tmp_sum, tmp_carry, bitsize, cloud_key);
-//        printf("done\n");
     }
 
     // Free
     delete_gate_bootstrapping_ciphertext_array(bitsize+1, tmp_diff);
-//    delete_gate_bootstrapping_ciphertext_array(23, tmp_square);
     delete_gate_bootstrapping_ciphertext_array(bitsize+1, tmp_sum);
     delete_gate_bootstrapping_ciphertext_array(1, tmp_carry);
 }
@@ -509,22 +349,15 @@ void HE_EuclideanDistance(LweSample* result, vector<LweSample*> a, vector<LweSam
 
 
     for (int i=0; i < nb_samples; i++){
-//        printf("On commence le %d sample\n", i+1);
-//        printf("Soustraction\n");
         bootsSUBNbit(tmp_diff, b[i], a[i], bitsize, cloud_key);
-//        printf("au carré\n");
         for (int j = 0; j < bitsize+1; ++j) {
             bootsCOPY(&tmp_diff2[j], &tmp_diff[j], cloud_key);
         }
         bootsMultiply(tmp_square, tmp_diff, tmp_diff2, bitsize, cloud_key);
-
         for (int j = 0; j < max_bitsize-1; ++j) {
             bootsCOPY(&tmp_sum[j], &result[j], cloud_key);
         }
-
-//        printf("addition\n");
         bootsADDNbit(result, tmp_square, tmp_sum, tmp_carry, max_bitsize-1, cloud_key);
-//        printf("done\n");
     }
 
     // Free
@@ -616,21 +449,12 @@ uint64_t TwoSComplement(uint64_t a, const int bitsize){
 uint64_t ABS(uint64_t a, const int bitsize){
     uint64_t bitsize_64 = bitsize-1;
     uint64_t tmp = (a >> bitsize_64);
-//    printSlot64(a);
-//    printSlot64(tmp);
     uint64_t mask = 0;
     for (int i = 0; i < bitsize; ++i) {
         mask = (mask ^ (tmp << i));
     }
     tmp = ADDNbit(a, mask, bitsize);
     return (tmp ^ mask);
-//    return ((a ^ mask) - mask);
-//    uint64_t tmp = TwoSComplement((a >> (bitsize_64)), bitsize);
-//    uint64_t tmp = a >> (bitsize_64);
-//    uint64_t res = ADDNbit(a ^ (a >> (bitsize_64)), tmp, bitsize);
-//    return res;
-//    return (a ^ (a >> (bitsize_64) ) - (a >> (bitsize_64)));
-//    return ((a >> (bitsize_64)) + a) ^ (a >> (bitsize_64));
 }
 
 // Cal of the subtraction
@@ -644,29 +468,79 @@ uint64_t SUBNbit(uint64_t a, uint64_t b, const int bitsize){
 // Naive multiplication a * b, could be great to implement Karatsuba
 uint64_t Multiply(uint64_t a, uint64_t b, const int bitsize) {
     uint64_t bitsize_64 = 64;
-//    printSlot64(bitsize_64);
     uint64_t one = 1;
     uint64_t tmp_ongoing_sum = 0, tmp_and_result = 0, tmp_final_sum = 0;
 
     for (int i = 0; i < bitsize; ++i) {
         uint64_t tmp = b;
-//        printSlot64(b);
-//        tmp = tmp << 63;
         tmp = tmp << (bitsize_64 - one - i);
         tmp = tmp >> (bitsize_64 - one);
-//        printSlot64(tmp);
         uint64_t tmp_b = 0;
         for (int j = 0; j < bitsize; ++j) {
             tmp_b = (tmp_b ^ (tmp << j));
         }
-//        printSlot64(tmp_b);
         tmp_and_result = a & tmp_b;
-//        printSlot64(tmp_and_result);
         tmp_and_result = tmp_and_result << i;
         tmp_ongoing_sum = tmp_final_sum;
         tmp_final_sum = ADDNbit(tmp_and_result, tmp_ongoing_sum, bitsize_64);
     }
     return tmp_final_sum;
+}
+
+/*
+* Calcul of the Manhattan Distance between two vectors of long, i.e. plaintexts
+*/
+uint64_t ManhattanDistance(vector<uint8_t> a, vector<uint8_t> b) {
+    if (a.size() != b.size())
+        perror("Manhattan Distance between two vectors of different sizes.\n");
+
+    long result = 0;
+    for(int i = 0; i < a.size(); i++)
+        result += labs(a[i] - b[i]);
+    return result;
+}
+
+/*
+ * Calcul of the Manhattan Distance between two vectors of numbers coded on 64 bits, i.e. plaintexts
+ */
+uint64_t ManhattanDistance64(vector<uint64_t> a, vector<uint64_t> b) {
+    if (a.size() != b.size())
+        perror("Manhattan Distance between two vectors of different sizes.\n");
+
+    long result = 0;
+    for(int i = 0; i < a.size(); i++)
+        result += labs(a[i] - b[i]);
+    return result;
+}
+
+/*
+ * Calcul of the square Euclidean Distance between two vectors of long, i.e. plaintexts
+ * The square root at the end is not executed as the equivalent operation on encrypted ciphertexts is too costly
+ */
+uint64_t EuclideanDistance(vector<uint8_t> a, vector<uint8_t> b) {
+    if (a.size() != b.size())
+        perror("Euclidean Distance between two vectors of different sizes.\n");
+
+    long result =0;
+    for (int i = 0; i < a.size() ; ++i)
+        result += powl(a[i] - b[i], 2);
+    //result = sqrtl(result);
+    return result;
+}
+
+/*
+ * Calcul of the square Euclidean Distance between two vectors of numbers coded on 64 bits, i.e. plaintexts
+ * The square root at the end is not executed as the equivalent operation on encrypted ciphertexts is too costly
+ */
+uint64_t EuclideanDistance64(vector<uint64_t> a, vector<uint64_t> b) {
+    if (a.size() != b.size())
+        perror("Euclidean Distance between two vectors of different sizes.\n");
+
+    long result =0;
+    for (int i = 0; i < a.size() ; ++i)
+        result += powl(a[i] - b[i], 2);
+    //result = sqrtl(result);
+    return result;
 }
 
 uint64_t ManhattanDistanceBitwise(vector<uint64_t> a, vector<uint64_t> b, const int bitsize){
@@ -709,9 +583,5 @@ uint64_t Function_f_clear(vector<uint64_t> a, vector<uint64_t> b, uint64_t bound
 uint64_t Function_g_clear(uint64_t result_b, uint64_t r0, uint64_t r1, const int bitsize)
 {
     uint64_t one = 1;
-    uint64_t tmp_diff = SUBNbit(one, result_b, bitsize);
-    uint64_t tmp_r0 = Multiply(r0, tmp_diff, 8);
-    uint64_t tmp_r1 = Multiply(result_b, r1, 8);
-    uint64_t result = ADDNbit(tmp_r0, tmp_r1, bitsize);
     return ((one-result_b)*r0 + result_b*r1);
 }

@@ -1,7 +1,3 @@
-//
-// Created by gaetan on 01/07/2020.
-//
-
 #ifndef TFHE_PROTOCOL_CLIENT_H
 #define TFHE_PROTOCOL_CLIENT_H
 
@@ -9,8 +5,7 @@
 #include <tfhe/tfhe_io.h>
 
 
-/* Class of a Client on Server side, thus has less information that the Client on Client side, only encrypted data.
- * Where shall be this Class? In Server.h ?*/
+// Class of a Client on Server side, thus has less information that the Client on Client side, only encrypted data.
 class Client{
         private:
         /*Parameters */
@@ -54,18 +49,12 @@ class Client{
 /* Class of a Client on Client side, i.e. that any biometric data is encrypted at this point.*/
 class Client_C: public Client {
 private:
-    /* Parameters
-    The commented parameters are already in the class Client on Server side.
-    The inheritance is implemented currently. Thus this class has all these parameters.
-    Working correctly for now.
-     */
-//    unsigned short int ID; //The unique IDentifier of a Client
+    // Parameters
     const int minimum_lambda = 80;
-    const TFheGateBootstrappingParameterSet *params; //The params, public, important for ?? homomorphic operation, in particular generating keys and bootstrapping.
+    const TFheGateBootstrappingParameterSet *params; //The params, public
     const TFheGateBootstrappingCloudKeySet *cloud_key;
-    std::vector<uint8_t> ptxt; // The plaintext of the biometric data. For now format from std. Can be changed.
-//    const TFheGateBootstrappingSecretKeySet* key;  // The secret key associated with the Client with the particular ID
-//    const LweSample* ctxt; // The biometric data encrypted.
+    std::vector<uint8_t> ptxt; // The plaintext of the biometric data.
+
 public:
 
     Client_C(unsigned short id, const TFheGateBootstrappingSecretKeySet *key, const std::vector<LweSample*> &ctxt,
