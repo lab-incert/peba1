@@ -18,7 +18,7 @@ Please follow the installation instructions on the [TFHE page](https://github.co
 
 ### Installation
 
-To build THREATS, after cloning the repository, enter the following commands:
+To build PEBA1, after cloning the repository, enter the following commands:
 ```
 cd peba1
 mkdir build
