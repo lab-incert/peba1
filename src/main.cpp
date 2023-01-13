@@ -266,7 +266,7 @@ int main(void)
     /*
     * The final test of the protocol
     */
-    cout << "\n------------------------\nThe protocol THREATS is tested on the plaintext domain!" << endl;
+    cout << "\n------------------------\nThe protocol PEBA1 is tested on the plaintext domain!" << endl;
     uint64_t bound_match_clear = nslots*2; // arbitrary choice
     t_from = Clock::now();
     // Generation of the random numbers
@@ -511,9 +511,9 @@ int main(void)
     printf("The result for Euclidean distance is %lu and should be %lu\n", tmp_result, eh);
 
     /*
-     * The final test of the protocol THREATS
+     * The final test of the protocol PEBA1
      */
-    cout << "\n------------------------\nThe protocol THREATS is tested on the plaintext domain!" << endl;
+    cout << "\n------------------------\nThe protocol PEBA1 is tested on the plaintext domain!" << endl;
     for (int i = 0; i < max_bitsize; ++i) {
         bootsCONSTANT(&tmp_dist[i], 0, cloud_key);
     }
@@ -581,7 +581,7 @@ int main(void)
         cout << "Client " << (int) client.getId() << " could not authenticate to the server!" << endl;
 
     t_to = Clock::now();
-    cout << "Protocol P: "
+    cout << "Protocol P_1: "
          << chrono::duration_cast<chrono::seconds>(t_to - t_from).count()
          << " seconds" << endl;
 
