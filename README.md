@@ -26,7 +26,7 @@ cd build
 cmake ..
 make
 ```
-The executable `Client` is created and can be executed.
+The executable `peba1` is created and can be executed.
 
 ### Licence
 
